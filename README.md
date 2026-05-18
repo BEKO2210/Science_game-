@@ -37,8 +37,24 @@ streamlit run src/science_game/dashboard/app.py
 | 1 | Walking skeleton: pyproject, OpenEvolve vendor, Ollama provider, matmul benchmark, smoke tests | **done** |
 | 2 | Streamlit dashboard (Launcher / Live / Artifacts / Compare), DVC stub, live plots | **done** |
 | 3 | MNIST NAS benchmark, HF Hub publisher, Anthropic + OpenAI providers (prompt caching), Quarto paper template | **done** |
-| 4 | Reproducibility polish (`--from-manifest`), CI, first published demo runs, `v0.1.0` tag | pending |
-| Phase 4 | Self-Improving Mutator via Unsloth (Colab) → fine-tuned Ollama model | post-MVP |
+| 4 | Reproducibility (`--from-manifest`), GitHub Actions CI, mutator-dataset builder, Phase-4 docs | **done** |
+| Phase 4 | Self-Improving Mutator via Unsloth (Colab) → fine-tuned Ollama model | docs ready, run on user PC |
+
+**MVP scope is complete.** All four sprints shipped, 33 tests passing. See [`docs/phase4-unsloth-colab.md`](docs/phase4-unsloth-colab.md) for the Self-Improving-Mutator playbook.
+
+### Reproducibility
+
+```bash
+# Reproduce any previous run from its manifest
+uv run science-game run --from-manifest runs/matmul-abc12345/manifest.json
+```
+
+### Build Phase-4 fine-tuning dataset
+
+```bash
+uv run science-game build-mutator-dataset \
+    --runs-root runs --out datasets/mutator-v1.jsonl --mode sft --min-delta 0.001
+```
 
 ### Dashboard
 

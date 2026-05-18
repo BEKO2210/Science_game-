@@ -31,7 +31,6 @@ from typing import Any
 
 from science_game.benchmarks.base import Benchmark, EvalResult, register_benchmark
 
-
 SEED_PROGRAM = textwrap.dedent(
     """
     \"\"\"Seed: a 1-layer MLP. ~7850 params, ~92% accuracy after 1 epoch.
@@ -92,9 +91,9 @@ class MnistNasBenchmark(Benchmark):
 
     def evaluate(self, program_code: str) -> EvalResult:
         try:
-            import torch  # noqa: F401 — checked at runtime
+            import torch
             from torch import nn
-            from torch.nn import functional as F  # noqa: N812
+            from torch.nn import functional as F
         except ImportError as e:
             return EvalResult(
                 fitness=0.0, correct=False,
@@ -131,7 +130,7 @@ class MnistNasBenchmark(Benchmark):
                 metrics={"traceback": traceback.format_exc(limit=3)},
             )
 
-    def _train_and_eval(self, Net, torch, nn, F) -> EvalResult:  # noqa: N803
+    def _train_and_eval(self, Net, torch, nn, F) -> EvalResult:
         device = torch.device(
             self.device if self.device
             else ("cuda" if torch.cuda.is_available() else "cpu")

@@ -14,7 +14,6 @@ import pytest
 
 from science_game.benchmarks import get_benchmark
 
-
 HAS_TORCH = importlib.util.find_spec("torch") is not None
 
 

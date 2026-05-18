@@ -8,7 +8,6 @@ import importlib.util
 
 import pytest
 
-
 HAS_ANTHROPIC = importlib.util.find_spec("anthropic") is not None
 HAS_OPENAI = importlib.util.find_spec("openai") is not None
 

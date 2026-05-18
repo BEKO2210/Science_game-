@@ -7,7 +7,7 @@ import platform
 import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from science_game import __version__
@@ -47,10 +47,10 @@ class Manifest:
     config: dict = field(default_factory=dict)
 
     @classmethod
-    def create(cls, run_id: str, config: dict) -> "Manifest":
+    def create(cls, run_id: str, config: dict) -> Manifest:
         return cls(
             run_id=run_id,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             science_game_version=__version__,
             python_version=sys.version.split()[0],
             platform=f"{platform.system()} {platform.release()} ({platform.machine()})",

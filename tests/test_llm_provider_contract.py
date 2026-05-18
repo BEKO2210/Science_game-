@@ -7,8 +7,6 @@ on the user's machine where ollama is available.
 
 from __future__ import annotations
 
-import pytest
-
 from science_game.llm import LLMProvider, MutationRequest, MutationResponse
 from science_game.llm.ollama_provider import OllamaProvider, extract_code
 
