@@ -1,0 +1,5 @@
+# Placeholder — wired up in Sprint 3.
+name: mnist_nas
+subset_size: 5000
+epochs: 1
+seed: 0

@@ -1,0 +1,4 @@
+# DVC should ignore Python caches
+__pycache__
+*.py[cod]
+.pytest_cache

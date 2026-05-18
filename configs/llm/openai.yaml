@@ -1,0 +1,3 @@
+provider: openai
+model: gpt-4o
+# API key picked from $OPENAI_API_KEY by the SDK.

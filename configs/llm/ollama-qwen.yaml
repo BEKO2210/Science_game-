@@ -1,0 +1,4 @@
+provider: ollama-qwen
+model: qwen2.5-coder:7b
+base_url: http://localhost:11434
+timeout: 120

@@ -1,0 +1,4 @@
+name: matmul
+num_cases: 500
+tol: 1.0e-6
+seed: 0

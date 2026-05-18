@@ -1,0 +1,10 @@
+# Hydra base config. Sprint 2 will wire this into the engine + dashboard.
+defaults:
+  - benchmark: matmul
+  - llm: ollama-qwen
+  - _self_
+
+generations: 50
+temperature: 0.8
+seed: 42
+runs_root: runs
