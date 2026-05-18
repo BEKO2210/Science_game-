@@ -73,7 +73,7 @@ if best_files:
         format_func=lambda p: p.name,
         index=len(best_files) - 1,
     )
-    st.code(Path(chosen).read_text(), language="python")
+    st.code(Path(chosen).read_text(encoding="utf-8"), language="python")
 
 if auto_refresh:
     time.sleep(refresh_seconds)

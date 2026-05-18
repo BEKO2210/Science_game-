@@ -37,7 +37,7 @@ if best_files:
     latest = run.path / "best" / "latest.py"
     if latest.exists():
         st.markdown("`best/latest.py` (current best):")
-        st.code(latest.read_text(), language="python")
+        st.code(latest.read_text(encoding="utf-8"), language="python")
 
 mut_df = load_mutations(run.path)
 if not mut_df.empty:

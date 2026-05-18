@@ -155,9 +155,9 @@ class Engine:
 
     def _save_best(self, ind: Individual) -> None:
         path = self.best_dir / f"gen{ind.generation:04d}_fit{ind.result.fitness:.6f}.py"
-        path.write_text(ind.code)
+        path.write_text(ind.code, encoding="utf-8")
         latest = self.best_dir / "latest.py"
-        latest.write_text(ind.code)
+        latest.write_text(ind.code, encoding="utf-8")
 
 
 def run_evolution(config: EvolutionConfig) -> Individual:

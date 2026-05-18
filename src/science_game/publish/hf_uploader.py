@@ -79,7 +79,7 @@ def upload_run(
     manifest_path = run_dir / "manifest.json"
     if not manifest_path.exists():
         raise FileNotFoundError(f"no manifest.json in {run_dir}")
-    manifest = json.loads(manifest_path.read_text())
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
     if repo_id is None:
         repo_id = f"{username}/algorithm-forge-{run_dir.name}"
@@ -87,7 +87,7 @@ def upload_run(
     # Auto-create README before upload.
     readme_path = run_dir / "README.md"
     if not readme_path.exists():
-        readme_path.write_text(_build_readme(run_dir, manifest))
+        readme_path.write_text(_build_readme(run_dir, manifest), encoding="utf-8")
 
     create_repo(
         repo_id=repo_id, repo_type=repo_type, private=private,

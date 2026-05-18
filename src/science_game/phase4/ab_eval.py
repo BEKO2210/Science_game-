@@ -121,5 +121,5 @@ def run_ab(
 def write_report(report: AbReport, path: Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report.to_dict(), indent=2, default=str))
+    path.write_text(json.dumps(report.to_dict(), indent=2, default=str), encoding="utf-8")
     return path

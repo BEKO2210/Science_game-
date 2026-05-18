@@ -43,7 +43,7 @@ def list_runs(runs_root: Path = DEFAULT_RUNS_ROOT) -> list[RunSummary]:
         if not mpath.exists():
             continue
         try:
-            manifest = json.loads(mpath.read_text())
+            manifest = json.loads(mpath.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
         df = load_events(child)

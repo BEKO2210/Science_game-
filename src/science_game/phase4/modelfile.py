@@ -41,5 +41,5 @@ def build_modelfile(
 def write_modelfile(path: Path, **kwargs) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(build_modelfile(**kwargs))
+    path.write_text(build_modelfile(**kwargs), encoding="utf-8")
     return path

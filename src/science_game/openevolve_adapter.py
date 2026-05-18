@@ -113,7 +113,7 @@ def make_evaluator(benchmark_name: str):
     bench = get_benchmark(benchmark_name)
 
     def evaluator(program_path: str) -> dict[str, Any]:
-        code = Path(program_path).read_text()
+        code = Path(program_path).read_text(encoding="utf-8")
         result = bench.evaluate(code)
         out: dict[str, Any] = {"score": float(result.fitness), "correct": bool(result.correct)}
         for k, v in (result.metrics or {}).items():
@@ -167,15 +167,16 @@ def run_with_openevolve(
     best_dir = run_dir / "best"
     best_dir.mkdir(exist_ok=True)
     best_path = best_dir / f"openevolve_best_fit{result.best_score:.6f}.py"
-    best_path.write_text(result.best_code)
-    (best_dir / "latest.py").write_text(result.best_code)
+    best_path.write_text(result.best_code, encoding="utf-8")
+    (best_dir / "latest.py").write_text(result.best_code, encoding="utf-8")
 
     (run_dir / "openevolve_summary.json").write_text(
         json.dumps({
             "best_score": float(result.best_score),
             "metrics": result.metrics,
             "output_dir": str(oe_output_dir),
-        }, indent=2, default=str)
+        }, indent=2, default=str),
+        encoding="utf-8",
     )
 
     # Re-evaluate against our benchmark so the returned Individual carries

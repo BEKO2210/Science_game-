@@ -58,7 +58,7 @@ def doctor_cmd(
                 failing_required += 1
         table.add_row(r.name, status, r.summary)
         if r.hint and not r.ok:
-            hints.append(f"  • {r.name}: {r.hint}")
+            hints.append(f"  - {r.name}: {r.hint}")
     console.print(table)
     if hints:
         console.print("\n[bold]Hints:[/]")
@@ -99,7 +99,7 @@ def run_cmd(
 ) -> None:
     """Launch one evolution run, writing artifacts to runs/<run_id>/."""
     if from_manifest is not None:
-        cfg_dict = json.loads(from_manifest.read_text())["config"]
+        cfg_dict = json.loads(from_manifest.read_text(encoding="utf-8"))["config"]
         # Restore the engine choice from the manifest if present.
         engine = cfg_dict.pop("engine", engine)
         cfg_dict["run_dir"] = Path(cfg_dict["run_dir"])
@@ -129,7 +129,7 @@ def run_cmd(
     manifest = Manifest.create(run_id, config=manifest_cfg)
     write_manifest(manifest, config.run_dir / "manifest.json")
 
-    console.print(f"[bold green]Run[/] {run_id} → {config.run_dir}")
+    console.print(f"[bold green]Run[/] {run_id} -> {config.run_dir}")
     console.print(
         f"[dim]benchmark={config.benchmark} provider={config.llm_provider} "
         f"engine={engine} gens={config.generations} seed={config.seed}[/]"
@@ -163,7 +163,7 @@ def build_mutator_dataset_cmd(
     from science_game.phase4.dataset import build_dataset
 
     n = build_dataset(runs_root, out, mode=mode, min_delta=min_delta)
-    console.print(f"[bold green]Wrote[/] {n} examples → {out}")
+    console.print(f"[bold green]Wrote[/] {n} examples -> {out}")
 
 
 COLAB_URL = (
@@ -219,11 +219,14 @@ def phase4_prepare_cmd(
     write_modelfile(modelfile_path, gguf_path=f"./{gguf_name}")
 
     instructions_path = out_dir / "README.md"
-    instructions_path.write_text(_phase4_readme(
-        dataset=dataset, examples=examples, gguf_name=gguf_name,
-        base_model=base_model, hf_dataset_repo=hf_dataset_repo,
-        hf_model_repo=hf_model_repo, ollama_model_name=ollama_model_name,
-    ))
+    instructions_path.write_text(
+        _phase4_readme(
+            dataset=dataset, examples=examples, gguf_name=gguf_name,
+            base_model=base_model, hf_dataset_repo=hf_dataset_repo,
+            hf_model_repo=hf_model_repo, ollama_model_name=ollama_model_name,
+        ),
+        encoding="utf-8",
+    )
 
     table = Table(title="Phase 4 prepare")
     table.add_column("key")
@@ -291,7 +294,7 @@ def _phase4_readme(
         f"Built from dataset `{dataset}` ({examples} examples).\n\n"
         "## Steps\n\n"
         f"1. `hf upload-dataset {hf_dataset_repo} {dataset}` (or push via huggingface_hub).\n"
-        f"2. Open [Unsloth Studio Colab]({COLAB_URL}); Runtime → T4 GPU; Run all.\n"
+        f"2. Open [Unsloth Studio Colab]({COLAB_URL}); Runtime -> T4 GPU; Run all.\n"
         f"3. In Studio: base model = `{base_model}`, dataset = `{hf_dataset_repo}`.\n"
         "4. Recipe: LoRA 4-bit, rank 16, alpha 16, lr 2e-4, 2-3 epochs.\n"
         f"5. Export GGUF (Q4_K_M) and push to `{hf_model_repo}`.\n"
