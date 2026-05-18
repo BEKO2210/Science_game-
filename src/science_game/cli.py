@@ -5,6 +5,8 @@ Usage:
     science-game run matmul --from-manifest runs/matmul-xxxx/manifest.json
     science-game list-benchmarks
     science-game build-mutator-dataset --runs-root runs --out dataset.jsonl
+    science-game phase4 prepare --dataset datasets/m-v1.jsonl --gguf-name forge-v1.gguf
+    science-game phase4 evaluate --benchmark matmul --finetuned-model forge-mutator-v1
 """
 
 from __future__ import annotations
@@ -23,6 +25,8 @@ from science_game.engine import EvolutionConfig, run_evolution
 from science_game.publish.manifest import Manifest, write_manifest
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
+phase4_app = typer.Typer(add_completion=False, no_args_is_help=True, help="Phase-4 helpers.")
+app.add_typer(phase4_app, name="phase4")
 console = Console()
 
 
@@ -105,6 +109,141 @@ def build_mutator_dataset_cmd(
 
     n = build_dataset(runs_root, out, mode=mode, min_delta=min_delta)
     console.print(f"[bold green]Wrote[/] {n} examples → {out}")
+
+
+COLAB_URL = (
+    "https://colab.research.google.com/github/unslothai/unsloth/blob/main"
+    "/studio/Unsloth_Studio_Colab.ipynb"
+)
+
+
+@phase4_app.command("prepare")
+def phase4_prepare_cmd(
+    dataset: Path = typer.Option(..., "--dataset", "-d", help="Path to mutator-dataset.jsonl"),
+    gguf_name: str = typer.Option(
+        "forge-mutator-v1.gguf", "--gguf-name",
+        help="Filename of the GGUF you'll download after Colab fine-tuning.",
+    ),
+    out_dir: Path = typer.Option(Path("phase4-out"), "--out-dir"),
+    base_model: str = typer.Option(
+        "unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit", "--base-model",
+        help="Unsloth-compatible base model spec.",
+    ),
+    hf_dataset_repo: str = typer.Option(
+        "Beko2210/algorithm-forge-mutations-v1", "--hf-dataset-repo",
+    ),
+    hf_model_repo: str = typer.Option(
+        "Beko2210/algorithm-forge-mutator-qwen-v1", "--hf-model-repo",
+    ),
+    ollama_model_name: str = typer.Option(
+        "algorithm-forge-mutator", "--ollama-name",
+    ),
+) -> None:
+    """Pre-fine-tune helper: validate the dataset, emit a Modelfile, print the Colab URL."""
+    import json
+
+    from science_game.phase4.modelfile import write_modelfile
+
+    if not dataset.exists():
+        raise typer.BadParameter(f"dataset not found: {dataset}")
+
+    examples = 0
+    with dataset.open() as f:
+        for line in f:
+            if line.strip():
+                try:
+                    json.loads(line)
+                    examples += 1
+                except json.JSONDecodeError as e:
+                    raise typer.BadParameter(f"malformed line in {dataset}: {e}") from e
+    if examples == 0:
+        raise typer.BadParameter(f"dataset {dataset} is empty")
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    modelfile_path = out_dir / "Modelfile"
+    write_modelfile(modelfile_path, gguf_path=f"./{gguf_name}")
+
+    instructions_path = out_dir / "README.md"
+    instructions_path.write_text(_phase4_readme(
+        dataset=dataset, examples=examples, gguf_name=gguf_name,
+        base_model=base_model, hf_dataset_repo=hf_dataset_repo,
+        hf_model_repo=hf_model_repo, ollama_model_name=ollama_model_name,
+    ))
+
+    table = Table(title="Phase 4 prepare")
+    table.add_column("key")
+    table.add_column("value")
+    table.add_row("dataset", str(dataset))
+    table.add_row("examples", str(examples))
+    table.add_row("Modelfile", str(modelfile_path))
+    table.add_row("Instructions", str(instructions_path))
+    table.add_row("Colab", COLAB_URL)
+    console.print(table)
+    console.print(
+        "\n[bold green]Next:[/] open the Colab URL above, run all cells, "
+        "then in Studio select the base model and your HF dataset."
+    )
+
+
+@phase4_app.command("evaluate")
+def phase4_evaluate_cmd(
+    benchmark: str = typer.Option("matmul", "--benchmark", "-b"),
+    base_provider: str = typer.Option("ollama-qwen", "--base-provider"),
+    base_model: str | None = typer.Option(None, "--base-model"),
+    finetuned_provider: str = typer.Option("ollama-qwen", "--finetuned-provider"),
+    finetuned_model: str | None = typer.Option("algorithm-forge-mutator", "--finetuned-model"),
+    seeds: str = typer.Option("0,1,2,3,4", "--seeds", help="Comma-separated seeds"),
+    generations: int = typer.Option(20, "--generations", "-g"),
+    runs_root: Path = typer.Option(Path("runs/ab"), "--runs-root"),
+    out: Path = typer.Option(Path("phase4-out/ab-report.json"), "--out", "-o"),
+) -> None:
+    """A/B-compare base mutator vs. fine-tuned mutator on the same benchmark + seeds."""
+    from science_game.phase4.ab_eval import run_ab, write_report
+
+    seed_list = [int(s.strip()) for s in seeds.split(",") if s.strip()]
+    console.print(
+        f"[bold]A/B[/] benchmark={benchmark}, "
+        f"base={base_provider}({base_model or 'default'}), "
+        f"finetuned={finetuned_provider}({finetuned_model or 'default'}), "
+        f"seeds={seed_list}, gens={generations}"
+    )
+    report = run_ab(
+        benchmark=benchmark,
+        base_provider=base_provider, base_model=base_model,
+        finetuned_provider=finetuned_provider, finetuned_model=finetuned_model,
+        seeds=seed_list, generations=generations, runs_root=runs_root,
+    )
+    write_report(report, out)
+
+    table = Table(title="A/B Report")
+    table.add_column("metric")
+    table.add_column("value")
+    table.add_row("wins finetuned", str(report.wins_finetuned))
+    table.add_row("wins base", str(report.wins_base))
+    table.add_row("ties", str(report.ties))
+    table.add_row("avg delta (finetuned - base)", f"{report.avg_delta:+.6f}")
+    table.add_row("report file", str(out))
+    console.print(table)
+
+
+def _phase4_readme(
+    dataset: Path, examples: int, gguf_name: str,
+    base_model: str, hf_dataset_repo: str, hf_model_repo: str,
+    ollama_model_name: str,
+) -> str:
+    return (
+        f"# Phase 4 prep for `{ollama_model_name}`\n\n"
+        f"Built from dataset `{dataset}` ({examples} examples).\n\n"
+        "## Steps\n\n"
+        f"1. `hf upload-dataset {hf_dataset_repo} {dataset}` (or push via huggingface_hub).\n"
+        f"2. Open [Unsloth Studio Colab]({COLAB_URL}); Runtime → T4 GPU; Run all.\n"
+        f"3. In Studio: base model = `{base_model}`, dataset = `{hf_dataset_repo}`.\n"
+        "4. Recipe: LoRA 4-bit, rank 16, alpha 16, lr 2e-4, 2-3 epochs.\n"
+        f"5. Export GGUF (Q4_K_M) and push to `{hf_model_repo}`.\n"
+        f"6. Download the GGUF locally and place it next to this Modelfile, named `{gguf_name}`.\n"
+        f"7. `ollama create {ollama_model_name} -f Modelfile`.\n"
+        f"8. `science-game phase4 evaluate --finetuned-model {ollama_model_name}` to A/B-compare.\n"
+    )
 
 
 if __name__ == "__main__":

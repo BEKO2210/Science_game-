@@ -49,12 +49,37 @@ streamlit run src/science_game/dashboard/app.py
 uv run science-game run --from-manifest runs/matmul-abc12345/manifest.json
 ```
 
-### Build Phase-4 fine-tuning dataset
+### Phase 4 — Self-Improving Mutator (end-to-end)
 
 ```bash
+# 1. Aggregate Mutationen aus deinen Runs
 uv run science-game build-mutator-dataset \
     --runs-root runs --out datasets/mutator-v1.jsonl --mode sft --min-delta 0.001
+
+# 2. HF Hub push
+hf upload-dataset Beko2210/algorithm-forge-mutations-v1 datasets/mutator-v1.jsonl
+
+# 3. Modelfile + Anleitung generieren
+uv run science-game phase4 prepare \
+    --dataset datasets/mutator-v1.jsonl \
+    --gguf-name model-Q4_K_M.gguf
+
+# 4. notebooks/unsloth_finetune.ipynb in Colab öffnen, T4 GPU, Run all
+#    → exportiert GGUF und pusht zu Beko2210/algorithm-forge-mutator-qwen-v1
+
+# 5. GGUF lokal laden + Ollama registrieren
+hf download Beko2210/algorithm-forge-mutator-qwen-v1 \
+    --include '*.gguf' --local-dir ./phase4-out
+cd phase4-out && ollama create algorithm-forge-mutator -f Modelfile
+
+# 6. A/B-Compare Base vs. Fine-tuned
+uv run science-game phase4 evaluate \
+    --benchmark matmul \
+    --finetuned-model algorithm-forge-mutator \
+    --seeds 0,1,2,3,4 --generations 20
 ```
+
+Output: `phase4-out/ab-report.json` mit Win/Tie/Loss-Statistik und avg-Fitness-Delta. Wenn der Fine-Tuned gewinnt: Loop ist geschlossen, das ist deine "AI evolves AI"-Demo.
 
 ### Dashboard
 
@@ -85,6 +110,7 @@ uv run science-game run matmul --provider openai -g 20
 ### Benchmarks
 
 - **`matmul`** — 2×2-Matrix-Multiplikation mit minimaler Multiplikationszahl. Strassen-Sanity-Check (8 naiv → 7 evolved).
+- **`sort`** — Sortier-Netzwerk für N=8. Seed: 28 Comparatoren (All-Pairs), Knuth-Optimum: 19. Schnelles Feedback (~ms pro Kandidat).
 - **`mnist_nas`** — Mini-NAS auf MNIST-Subset (5k Samples, 1 Epoche). Fitness = `accuracy − 0.05·log₁₀(params)`. Braucht `uv sync --extra nas` (torch+torchvision).
 
 ### Publishing
