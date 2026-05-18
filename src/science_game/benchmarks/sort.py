@@ -155,7 +155,15 @@ class SortingNetworkBenchmark(Benchmark):
         correctness = correct / len(cases)
 
         comparators = len(pairs)
-        fitness = correctness * (1.0 / max(comparators, 1))
+        # Hard correctness gate: a sorting network that doesn't sort every
+        # input is worthless, no matter how few comparators it uses. Without
+        # this, the optimizer happily accepts partial-correctness 19-comparator
+        # networks (fitness 0.70/19 > 1.0/28) and then gets stuck there because
+        # the LLM keeps reproducing the same buggy variant.
+        if correctness < 1.0:
+            fitness = 0.0
+        else:
+            fitness = 1.0 / max(comparators, 1)
 
         return EvalResult(
             fitness=fitness,
