@@ -16,4 +16,8 @@ def get_provider(name: str, **kwargs) -> LLMProvider:
         from science_game.llm.openai_provider import OpenAIProvider
 
         return OpenAIProvider(**kwargs)
+    if name == "mock":
+        from science_game.llm.mock_provider import MockProvider
+
+        return MockProvider(**kwargs)
     raise ValueError(f"unknown llm provider: {name!r}")

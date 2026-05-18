@@ -113,6 +113,19 @@ uv run science-game run matmul --provider openai -g 20
 - **`sort`** — Sortier-Netzwerk für N=8. Seed: 28 Comparatoren (All-Pairs), Knuth-Optimum: 19. Schnelles Feedback (~ms pro Kandidat).
 - **`mnist_nas`** — Mini-NAS auf MNIST-Subset (5k Samples, 1 Epoche). Fitness = `accuracy − 0.05·log₁₀(params)`. Braucht `uv sync --extra nas` (torch+torchvision).
 
+### Erstmal alles prüfen
+
+```bash
+# Preflight — sagt was installiert ist, was fehlt, was zu tun ist
+uv run science-game doctor
+
+# Smoke-Lauf OHNE Ollama/API (Mock-Provider liefert pre-baked Antworten)
+uv run science-game run sort --provider mock --generations 3
+# → findet das Knuth-19-Optimum innerhalb 1 Generation
+```
+
+Wenn `doctor` "All required checks passed" zeigt und der Mock-Run grün ist, läuft die komplette Pipeline (CLI → Engine → Benchmark → Events-Log → Best-Files → Dashboard-Reader). Erst dann lohnt sich Ollama-Setup.
+
 ### Engines
 
 Zwei Optionen:

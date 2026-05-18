@@ -30,6 +30,46 @@ app.add_typer(phase4_app, name="phase4")
 console = Console()
 
 
+@app.command("doctor")
+def doctor_cmd(
+    ollama_model: str = typer.Option(
+        "qwen2.5-coder:7b", "--ollama-model",
+        help="Which Ollama model name to verify is pulled.",
+    ),
+) -> None:
+    """Preflight: verify Python version, extras, submodules, Ollama, GPU."""
+    from science_game.doctor import run_all_checks
+
+    table = Table(title="science-game doctor")
+    table.add_column("check")
+    table.add_column("status")
+    table.add_column("detail")
+
+    results = run_all_checks(ollama_model=ollama_model)
+    failing_required = 0
+    hints: list[str] = []
+    for r in results:
+        if r.ok:
+            status = "[green]OK[/]"
+        else:
+            optional = "(optional)" in r.name
+            status = "[yellow]SKIP[/]" if optional else "[red]FAIL[/]"
+            if not optional:
+                failing_required += 1
+        table.add_row(r.name, status, r.summary)
+        if r.hint and not r.ok:
+            hints.append(f"  • {r.name}: {r.hint}")
+    console.print(table)
+    if hints:
+        console.print("\n[bold]Hints:[/]")
+        for h in hints:
+            console.print(h)
+    if failing_required:
+        console.print(f"\n[red bold]{failing_required} required check(s) failed.[/]")
+        raise typer.Exit(code=1)
+    console.print("\n[green bold]All required checks passed.[/]")
+
+
 @app.command("list-benchmarks")
 def list_benchmarks_cmd() -> None:
     table = Table(title="Available benchmarks")

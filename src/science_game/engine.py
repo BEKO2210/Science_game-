@@ -60,6 +60,13 @@ class Engine:
     def run(self) -> Individual:
         seed_code = self.benchmark.seed_program
         seed_result = self.benchmark.evaluate(seed_code)
+        if not seed_result.correct and seed_result.error:
+            # Seed must run, otherwise the benchmark is broken — fail loud.
+            raise RuntimeError(
+                f"benchmark {self.config.benchmark!r} seed program failed evaluation: "
+                f"{seed_result.error}"
+            )
+
         best = Individual(code=seed_code, result=seed_result, generation=0)
         self._log_event({
             "kind": "init",
@@ -68,6 +75,9 @@ class Engine:
             "metrics": seed_result.metrics,
         })
         self._save_best(best)
+
+        consecutive_provider_errors = 0
+        max_consecutive_errors = 3
 
         for gen in range(1, self.config.generations + 1):
             t0 = time.time()
@@ -89,7 +99,16 @@ class Engine:
                     "error": err,
                     "llm_seconds": llm_seconds,
                 })
+                consecutive_provider_errors += 1
+                if consecutive_provider_errors >= max_consecutive_errors:
+                    raise RuntimeError(
+                        f"LLM provider {self.config.llm_provider!r} failed "
+                        f"{consecutive_provider_errors} times in a row. "
+                        f"Last error: {err}. "
+                        f"Run `science-game doctor` to diagnose."
+                    )
                 continue
+            consecutive_provider_errors = 0
 
             child_result = self.benchmark.evaluate(response.child_code)
             improved = child_result.fitness > best.result.fitness

@@ -47,11 +47,14 @@ outputs/
 multirun/
 .hydra/
 
-# Run artifacts (managed by DVC)
-runs/*/code_db/
-runs/*/plots/
-runs/*/best/
-runs/*/*.jsonl
+# Local evolution outputs — all of runs/ except a placeholder
+runs/
+!runs/.gitkeep
+
+# Local datasets + phase4 outputs (publish via HF Hub, not git)
+datasets/
+phase4-out/
+.launcher.log
 
 # Benchmark data (managed by DVC)
 benchmarks/mnist/
