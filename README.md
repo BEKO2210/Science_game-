@@ -49,7 +49,18 @@ streamlit run src/science_game/dashboard/app.py
 uv run science-game run --from-manifest runs/matmul-abc12345/manifest.json
 ```
 
-### Phase 4 — Self-Improving Mutator (end-to-end)
+### Phase 4 — Schnellste Variante: One-Click Colab
+
+Komplett-Pipeline (Runs generieren → Dataset → Fine-Tuning → A/B-Vergleich) in einem Notebook auf gratis Colab T4:
+
+1. `notebooks/phase4_full_pipeline.ipynb` in [Colab](https://colab.research.google.com) öffnen (File → Upload notebook, oder per "Open notebook → GitHub" das Repo wählen)
+2. Runtime → Change runtime type → **T4 GPU**
+3. In **Colab Secrets** anlegen: `HF_TOKEN` (Pflicht), `OPENAI_API_KEY` oder `ANTHROPIC_API_KEY` (eines davon, je nach Provider-Wahl in Zelle 1)
+4. **Runtime → Run all** — fertig in 30 min (`quick`) bis 3 h (`deep`)
+
+Output am Ende: ein A/B-Report der dir sagt ob deine fine-getunte Mutator-KI die Base-KI messbar schlägt. Dataset + Modell landen automatisch auf deinem HF-Hub als `Beko2210/algorithm-forge-*-v1`.
+
+### Phase 4 — Self-Improving Mutator (manuelle Variante)
 
 ```bash
 # 1. Aggregate Mutationen aus deinen Runs
