@@ -108,14 +108,32 @@ def build_openevolve_config(
     return cfg
 
 
-def make_evaluator(benchmark_name: str):
-    """Return a callable suitable for openevolve.run_evolution(evaluator=...)."""
-    bench = get_benchmark(benchmark_name)
+SCIENCE_GAME_BENCHMARK_ENV = "SCIENCE_GAME_BENCHMARK"
 
-    def evaluator(program_path: str) -> dict[str, Any]:
-        code = Path(program_path).read_text(encoding="utf-8")
+
+def make_evaluator(benchmark_name: str):
+    """Return a callable suitable for openevolve.run_evolution(evaluator=...).
+
+    OpenEvolve loads the evaluator function by reading its source text into a
+    fresh module — closures, default args, and module-level imports are all
+    lost. Pass the benchmark name through an environment variable so the
+    reloaded function can recover it.
+    """
+    import os
+
+    os.environ[SCIENCE_GAME_BENCHMARK_ENV] = benchmark_name
+
+    def evaluator(program_path):
+        import os as _os
+        from pathlib import Path as _Path
+
+        from science_game.benchmarks import get_benchmark as _get_benchmark
+
+        _name = _os.environ["SCIENCE_GAME_BENCHMARK"]
+        bench = _get_benchmark(_name)
+        code = _Path(program_path).read_text(encoding="utf-8")
         result = bench.evaluate(code)
-        out: dict[str, Any] = {"score": float(result.fitness), "correct": bool(result.correct)}
+        out = {"score": float(result.fitness), "correct": bool(result.correct)}
         for k, v in (result.metrics or {}).items():
             if isinstance(v, (int, float, bool, str)):
                 out[k] = v

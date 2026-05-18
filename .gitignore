@@ -70,3 +70,4 @@ benchmarks/mnist/
 .env
 .env.*
 *.key
+.claude/
