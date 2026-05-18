@@ -154,7 +154,14 @@ class Matmul2x2Benchmark(Benchmark):
         if mult_counts and len(set(mult_counts)) > 1:
             avg_mults = max(mult_counts)  # be pessimistic
 
-        fitness = correctness * (1.0 / avg_mults) if avg_mults > 0 else 0.0
+        # Hard correctness gate: a matmul algorithm that returns the wrong
+        # product is useless no matter how few multiplications it uses.
+        # Without this, partial-correct 7-mult variants beat the seed
+        # 8-mult algorithm and trap the search in a local optimum.
+        if correctness < 1.0 or avg_mults <= 0:
+            fitness = 0.0
+        else:
+            fitness = 1.0 / avg_mults
 
         return EvalResult(
             fitness=fitness,
