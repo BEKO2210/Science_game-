@@ -48,6 +48,10 @@ def run_cmd(
     temperature: float = typer.Option(0.8, "--temperature", "-t"),
     seed: int = typer.Option(42, "--seed", "-s"),
     runs_root: Path = typer.Option(Path("runs"), "--runs-root"),
+    engine: str = typer.Option(
+        "standalone", "--engine",
+        help="standalone (MVP hill-climber) | openevolve (MAP-Elites + islands)",
+    ),
     from_manifest: Path | None = typer.Option(
         None, "--from-manifest",
         help="Reproduce a previous run from its manifest.json. All other flags are ignored.",
@@ -56,6 +60,8 @@ def run_cmd(
     """Launch one evolution run, writing artifacts to runs/<run_id>/."""
     if from_manifest is not None:
         cfg_dict = json.loads(from_manifest.read_text())["config"]
+        # Restore the engine choice from the manifest if present.
+        engine = cfg_dict.pop("engine", engine)
         cfg_dict["run_dir"] = Path(cfg_dict["run_dir"])
         # Re-run gets a fresh run_id so we don't overwrite the original.
         new_run_id = f"{cfg_dict['benchmark']}-rerun-{uuid.uuid4().hex[:8]}"
@@ -78,16 +84,25 @@ def run_cmd(
             run_dir=run_dir,
         )
 
-    manifest = Manifest.create(run_id, config=asdict(config))
+    manifest_cfg = asdict(config)
+    manifest_cfg["engine"] = engine
+    manifest = Manifest.create(run_id, config=manifest_cfg)
     write_manifest(manifest, config.run_dir / "manifest.json")
 
     console.print(f"[bold green]Run[/] {run_id} → {config.run_dir}")
     console.print(
         f"[dim]benchmark={config.benchmark} provider={config.llm_provider} "
-        f"gens={config.generations} seed={config.seed}[/]"
+        f"engine={engine} gens={config.generations} seed={config.seed}[/]"
     )
 
-    best = run_evolution(config)
+    if engine == "openevolve":
+        from science_game.openevolve_adapter import run_with_openevolve
+
+        best = run_with_openevolve(config)
+    elif engine == "standalone":
+        best = run_evolution(config)
+    else:
+        raise typer.BadParameter(f"unknown engine: {engine!r}. Use 'standalone' or 'openevolve'.")
 
     console.print(
         f"\n[bold]Best fitness:[/] {best.result.fitness:.6f} "

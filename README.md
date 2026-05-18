@@ -113,6 +113,21 @@ uv run science-game run matmul --provider openai -g 20
 - **`sort`** — Sortier-Netzwerk für N=8. Seed: 28 Comparatoren (All-Pairs), Knuth-Optimum: 19. Schnelles Feedback (~ms pro Kandidat).
 - **`mnist_nas`** — Mini-NAS auf MNIST-Subset (5k Samples, 1 Epoche). Fitness = `accuracy − 0.05·log₁₀(params)`. Braucht `uv sync --extra nas` (torch+torchvision).
 
+### Engines
+
+Zwei Optionen:
+
+- **`standalone`** (default) — der MVP-Hill-Climber: 1 Population, 1 Parent, akzeptiert wenn besser. Schreibt vollständigen Mutations-Log (Phase-4-ready).
+- **`openevolve`** — wrappt den vendor'ed [OpenEvolve](https://github.com/codelion/openevolve) Controller: MAP-Elites + Island-Model + Diff-Mutation. AlphaEvolve-style. Aktuell ohne `mutations.jsonl` (wird in einem späteren Sprint nachgereicht).
+
+```bash
+# OpenEvolve einmalig installieren
+./scripts/install_openevolve.sh
+
+# Mit OpenEvolve-Engine laufen lassen
+uv run science-game run matmul --engine openevolve --provider ollama-qwen -g 100
+```
+
 ### Publishing
 
 ```bash
