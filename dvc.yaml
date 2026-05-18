@@ -1,0 +1,27 @@
+# DVC pipeline stub.
+#
+# Run a real evolution and DVC-track its outputs:
+#   uv run dvc repro evolve
+#
+# This file is intentionally minimal in Sprint 2 — Sprint 3 wires HF Hub
+# publishing as a follow-up stage. To enable, install the publish extra:
+#   uv sync --extra dev --extra dashboard --extra publish
+#   uv run dvc init
+#
+# After `dvc init`, the `runs/` directory should be added as a DVC output
+# of the evolve stage; large per-run artifacts then live in DVC remote
+# storage rather than the git repo.
+
+stages:
+  evolve:
+    cmd: uv run science-game run matmul --provider ollama-qwen --generations 50
+    deps:
+      - src/science_game/benchmarks/matmul.py
+      - src/science_game/engine.py
+      - src/science_game/llm/ollama_provider.py
+      - configs/benchmark/matmul.yaml
+      - configs/llm/ollama-qwen.yaml
+    outs:
+      - runs:
+          cache: true
+          persist: true

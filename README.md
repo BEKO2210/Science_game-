@@ -34,11 +34,20 @@ streamlit run src/science_game/dashboard/app.py
 
 | Sprint | Scope | State |
 |---|---|---|
-| 1 | Walking skeleton: pyproject, OpenEvolve vendor, Ollama provider, matmul benchmark, smoke tests | in progress |
-| 2 | Streamlit dashboard, DVC, live plots, diff viewer | pending |
+| 1 | Walking skeleton: pyproject, OpenEvolve vendor, Ollama provider, matmul benchmark, smoke tests | **done** |
+| 2 | Streamlit dashboard (Launcher / Live / Artifacts / Compare), DVC stub, live plots | **done** |
 | 3 | MNIST NAS benchmark, HF Hub publishing, Anthropic+OpenAI providers, Quarto paper template | pending |
 | 4 | Reproducibility polish, CI, first published demo runs, `v0.1.0` tag | pending |
 | Phase 4 | Self-Improving Mutator via Unsloth (Colab) → fine-tuned Ollama model | post-MVP |
+
+### Dashboard
+
+```bash
+uv sync --extra dev --extra dashboard
+./scripts/dashboard.sh   # → http://localhost:8501
+```
+
+4 Seiten: **Home** (Run-Übersicht), **Launcher** (neuen Run starten — spawnt einen `science-game run`-Subprocess), **Live** (auto-refreshing Fitness-Plot + letzte Mutation + Best-of-Generation-Snapshots), **Compare** (mehrere Runs auf einem Plot).
 
 Full design doc: see the plan file referenced in the project root, or `docs/plan.md` once mirrored in.
 
