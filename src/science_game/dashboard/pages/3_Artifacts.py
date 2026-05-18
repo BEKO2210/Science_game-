@@ -53,7 +53,32 @@ files = [p for p in run.path.rglob("*") if p.is_file()]
 st.code("\n".join(str(p.relative_to(run.path)) for p in sorted(files)), language="text")
 
 st.divider()
-st.markdown("### Publish (Sprint 3)")
-st.caption("Upload best-of-run + manifest to Hugging Face Hub — wired up in the next sprint.")
-disabled = True
-st.button("Publish to HF Hub", disabled=disabled, help="Sprint 3.")
+st.markdown("### Publish to Hugging Face Hub")
+
+col_a, col_b = st.columns([3, 1])
+with col_a:
+    default_repo = f"Beko2210/algorithm-forge-{run.run_id}"
+    repo_id = st.text_input("Repo ID", value=default_repo)
+    repo_type = st.selectbox("Type", ["model", "dataset"], index=0)
+    private = st.checkbox("Private", value=False)
+with col_b:
+    st.write("")
+    st.write("")
+    do_upload = st.button("Publish", type="primary")
+
+if do_upload:
+    from science_game.publish.hf_uploader import upload_run
+
+    with st.spinner(f"Uploading {run.path} to {repo_id}..."):
+        try:
+            result = upload_run(
+                run.path, repo_id=repo_id, repo_type=repo_type, private=private,
+            )
+            st.success(f"Uploaded {result.files_uploaded} files.")
+            st.markdown(f"View: {result.repo_url}")
+        except Exception as e:
+            st.error(f"Upload failed: {e!r}")
+            st.caption(
+                "Make sure you ran `hf auth login` or have $HF_TOKEN set, "
+                "and that `huggingface_hub` is installed."
+            )

@@ -1,0 +1,16 @@
+project:
+  type: default
+  output-dir: _build
+
+format:
+  html:
+    toc: true
+    number-sections: true
+    theme: cosmo
+  pdf:
+    documentclass: article
+    geometry: margin=1in
+    number-sections: true
+
+execute:
+  freeze: auto

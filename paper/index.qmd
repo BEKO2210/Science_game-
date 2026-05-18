@@ -1,0 +1,77 @@
+---
+title: "Algorithm Forge: hobbyist-scale LLM-driven evolutionary code search"
+author: "beko2210"
+date: today
+abstract: |
+  We describe Algorithm Forge, an open-source single-developer system that
+  applies LLM-driven evolutionary search to algorithm and small-model
+  discovery on commodity GPUs. Built on top of OpenEvolve, the system adds
+  a research-grade dashboard, hybrid local/API LLM mutation, full run
+  reproducibility, and a publish pipeline targeting Hugging Face Hub.
+  We further outline a self-improvement loop where mutation logs are
+  reused as fine-tuning data for a specialized mutator LLM via Unsloth.
+---
+
+## Introduction
+
+DeepMind's AlphaEvolve (May 2025) [@alphaevolve2025] demonstrated that
+LLM-driven evolutionary search can discover algorithmic improvements
+previously out of reach, notably a 48-multiplication algorithm for 4×4
+complex matrix multiplication that improved on Strassen's 56-year-old
+record [@strassen1969]. OpenEvolve [@openevolve] provides an open-source
+re-implementation of the AlphaEvolve methodology.
+
+This paper describes **Algorithm Forge**: a hobbyist-scale platform that
+applies the AlphaEvolve approach to a variety of small-to-medium tasks on
+commodity hardware (RTX 3060+), with a research dashboard for
+interactive exploration and a publish pipeline that records
+reproducibility-grade artifacts.
+
+## System
+
+### Architecture
+
+[TODO: insert architecture diagram from `runs/<id>/plots/architecture.png`]
+
+The system has four components:
+
+1. An **evolution engine** wrapping OpenEvolve, which produces and
+   evaluates candidate programs.
+2. A **mutator LLM** — by default a local Ollama-hosted Qwen2.5-Coder-7B,
+   with hybrid switching to Anthropic Claude or OpenAI GPT-4 via API.
+3. A **benchmark adapter** layer: each benchmark provides a seed program
+   and a deterministic evaluator returning `EvalResult(fitness, metrics)`.
+4. A **publish pipeline** that bundles per-run artifacts (manifest,
+   events log, mutations log, best-of-generation snapshots) and pushes
+   them to Hugging Face Hub.
+
+### Benchmarks
+
+Sprint 1–3 ship two benchmarks:
+
+- **`matmul`** — evolve a 2×2 matrix multiplication using as few scalar
+  multiplications as possible. The naive algorithm uses 8; Strassen's
+  result uses 7. The benchmark uses a counted-multiplication callable so
+  any candidate that bypasses the counter scores zero.
+- **`mnist_nas`** — evolve a small PyTorch `Net(nn.Module)`, trained for
+  one epoch on a MNIST subset. Fitness is `accuracy − α·log₁₀(params)`
+  to push the search along a Pareto front.
+
+## Reproducibility
+
+[TODO: describe manifest, seed control, lock-file capture, `--from-manifest`.]
+
+## Self-Improvement (Phase 4)
+
+[TODO: build mutation dataset from `runs/*/mutations.jsonl`, fine-tune
+Qwen2.5-Coder or Gemma 4 via Unsloth on Colab T4, export GGUF, A/B-compare
+fine-tuned vs. base mutator on the same benchmark/seed.]
+
+## Results
+
+[TODO: plug in plots from `runs/`.]
+
+## References
+
+::: {#refs}
+:::

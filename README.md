@@ -36,8 +36,8 @@ streamlit run src/science_game/dashboard/app.py
 |---|---|---|
 | 1 | Walking skeleton: pyproject, OpenEvolve vendor, Ollama provider, matmul benchmark, smoke tests | **done** |
 | 2 | Streamlit dashboard (Launcher / Live / Artifacts / Compare), DVC stub, live plots | **done** |
-| 3 | MNIST NAS benchmark, HF Hub publishing, Anthropic+OpenAI providers, Quarto paper template | pending |
-| 4 | Reproducibility polish, CI, first published demo runs, `v0.1.0` tag | pending |
+| 3 | MNIST NAS benchmark, HF Hub publisher, Anthropic + OpenAI providers (prompt caching), Quarto paper template | **done** |
+| 4 | Reproducibility polish (`--from-manifest`), CI, first published demo runs, `v0.1.0` tag | pending |
 | Phase 4 | Self-Improving Mutator via Unsloth (Colab) → fine-tuned Ollama model | post-MVP |
 
 ### Dashboard
@@ -47,7 +47,41 @@ uv sync --extra dev --extra dashboard
 ./scripts/dashboard.sh   # → http://localhost:8501
 ```
 
-4 Seiten: **Home** (Run-Übersicht), **Launcher** (neuen Run starten — spawnt einen `science-game run`-Subprocess), **Live** (auto-refreshing Fitness-Plot + letzte Mutation + Best-of-Generation-Snapshots), **Compare** (mehrere Runs auf einem Plot).
+4 Seiten: **Home** (Run-Übersicht), **Launcher** (neuen Run starten — spawnt einen `science-game run`-Subprocess), **Live** (auto-refreshing Fitness-Plot + letzte Mutation + Best-of-Generation-Snapshots), **Compare** (mehrere Runs auf einem Plot). Auf der **Artifacts**-Seite kann jeder Run mit einem Klick als HF-Hub-Repo veröffentlicht werden.
+
+### LLM-Provider
+
+```bash
+# Lokal mit Ollama (Default)
+ollama pull qwen2.5-coder:7b
+uv run science-game run matmul --provider ollama-qwen -g 20
+
+# Anthropic (Prompt-Caching aktiv — drastisch günstiger bei vielen Generationen)
+export ANTHROPIC_API_KEY=sk-ant-...
+uv sync --extra api-llm
+uv run science-game run matmul --provider anthropic -g 20
+
+# OpenAI (implizites Prompt-Caching)
+export OPENAI_API_KEY=sk-...
+uv run science-game run matmul --provider openai -g 20
+```
+
+### Benchmarks
+
+- **`matmul`** — 2×2-Matrix-Multiplikation mit minimaler Multiplikationszahl. Strassen-Sanity-Check (8 naiv → 7 evolved).
+- **`mnist_nas`** — Mini-NAS auf MNIST-Subset (5k Samples, 1 Epoche). Fitness = `accuracy − 0.05·log₁₀(params)`. Braucht `uv sync --extra nas` (torch+torchvision).
+
+### Publishing
+
+```bash
+hf auth login   # einmalig
+# Dashboard → Artifacts → Publish-Button
+# oder programmatisch:
+uv run python -c "from science_game.publish import upload_run; \
+    upload_run('runs/matmul-xxxxxx')"
+```
+
+Jeder Run wird als HF-Repo angelegt mit Manifest, Events, Mutationen (Phase-4-Trainingsdaten) und Best-of-Generation-Code.
 
 Full design doc: see the plan file referenced in the project root, or `docs/plan.md` once mirrored in.
 
