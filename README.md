@@ -53,12 +53,28 @@ uv run science-game run --from-manifest runs/matmul-abc12345/manifest.json
 
 Komplett-Pipeline (Runs generieren → Dataset → Fine-Tuning → A/B-Vergleich) in einem Notebook auf gratis Colab T4:
 
-1. `notebooks/phase4_full_pipeline.ipynb` in [Colab](https://colab.research.google.com) öffnen (File → Upload notebook, oder per "Open notebook → GitHub" das Repo wählen)
-2. Runtime → Change runtime type → **T4 GPU**
-3. In **Colab Secrets** anlegen: `HF_TOKEN` (Pflicht), `OPENAI_API_KEY` oder `ANTHROPIC_API_KEY` (eines davon, je nach Provider-Wahl in Zelle 1)
-4. **Runtime → Run all** — fertig in 30 min (`quick`) bis 3 h (`deep`)
+**Option A — Iterative Self-Improvement (empfohlen, resilient gegen Disconnects):**
 
-Output am Ende: ein A/B-Report der dir sagt ob deine fine-getunte Mutator-KI die Base-KI messbar schlägt. Dataset + Modell landen automatisch auf deinem HF-Hub als `Beko2210/algorithm-forge-*-v1`.
+`notebooks/phase4_iterative_loop.ipynb` öffnen in Colab via Direkt-URL:
+
+```
+https://colab.research.google.com/github/BEKO2210/Science_game-/blob/claude/evolution-game-concept-yN3Tn/notebooks/phase4_iterative_loop.ipynb
+```
+
+Diese Variante:
+- Persistiert alles in Google Drive (`MyDrive/algorithm-forge/`)
+- Kann an jeder Stelle weitermachen falls Colab disconnected
+- Trainiert iterativ: V1 lernt von OpenAI, V2 lernt von V1+OpenAI, V3 von V2+V1+OpenAI, …
+- Plot am Ende zeigt Fortschritt über Iterationen
+- Default: 2 Iterationen ~3 Stunden, ~$1 OpenAI-Kosten
+
+**Option B — Single-Shot (einfacher, kein Drive):**
+
+`notebooks/phase4_full_pipeline.ipynb` — eine Iteration ohne Drive-Persistenz, ~90 min.
+
+Für beide brauchst du in **Colab Secrets**: `HF_TOKEN` (Pflicht), `OPENAI_API_KEY` (für Bootstrap).
+
+Output am Ende: A/B-Report ob deine fine-getunte Mutator-KI die Base-KI messbar schlägt. Dataset + Modell landen automatisch auf deinem HF-Hub als `Beko2210/algorithm-forge-*-vN`.
 
 ### Phase 4 — Self-Improving Mutator (manuelle Variante)
 
