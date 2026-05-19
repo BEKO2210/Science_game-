@@ -53,28 +53,31 @@ uv run science-game run --from-manifest runs/matmul-abc12345/manifest.json
 
 Komplett-Pipeline (Runs generieren → Dataset → Fine-Tuning → A/B-Vergleich) in einem Notebook auf gratis Colab T4:
 
-**Option A — Iterative Self-Improvement (empfohlen, resilient gegen Disconnects):**
+**Option A — Ollama-only, $0 Kosten (empfohlen):**
 
-`notebooks/phase4_iterative_loop.ipynb` öffnen in Colab via Direkt-URL:
+`notebooks/phase4_iterative_loop_ollama.ipynb` direkt in Colab öffnen:
 
 ```
-https://colab.research.google.com/github/BEKO2210/Science_game-/blob/claude/evolution-game-concept-yN3Tn/notebooks/phase4_iterative_loop.ipynb
+https://colab.research.google.com/github/BEKO2210/Science_game-/blob/claude/evolution-game-concept-yN3Tn/notebooks/phase4_iterative_loop_ollama.ipynb
 ```
 
-Diese Variante:
-- Persistiert alles in Google Drive (`MyDrive/algorithm-forge/`)
-- Kann an jeder Stelle weitermachen falls Colab disconnected
-- Trainiert iterativ: V1 lernt von OpenAI, V2 lernt von V1+OpenAI, V3 von V2+V1+OpenAI, …
-- Plot am Ende zeigt Fortschritt über Iterationen
-- Default: 2 Iterationen ~3 Stunden, ~$1 OpenAI-Kosten
+- 100% lokal auf T4 GPU mit Qwen2.5-Coder-14B (~9GB) als Bootstrap-Mutator
+- Fine-tuned Modelle landen automatisch in Ollama als `forge-mutator-v1`, `-v2`, ...
+- Drive-Persistenz, idempotent (überlebt Disconnects)
+- Nur HF_TOKEN nötig (für Upload deiner Modelle), kein API-Key
+- ~70 min pro Iteration, Default 2 Iterationen
 
-**Option B — Single-Shot (einfacher, kein Drive):**
+**Option B — OpenAI Bootstrap (~$1, schneller pro Iter):**
 
-`notebooks/phase4_full_pipeline.ipynb` — eine Iteration ohne Drive-Persistenz, ~90 min.
+`notebooks/phase4_iterative_loop.ipynb` — Qwen-Iterationen mit OpenAI-Bootstrap (gpt-4o-mini/gpt-4o).
 
-Für beide brauchst du in **Colab Secrets**: `HF_TOKEN` (Pflicht), `OPENAI_API_KEY` (für Bootstrap).
+**Option C — Single-Shot ohne Persistenz:**
 
-Output am Ende: A/B-Report ob deine fine-getunte Mutator-KI die Base-KI messbar schlägt. Dataset + Modell landen automatisch auf deinem HF-Hub als `Beko2210/algorithm-forge-*-vN`.
+`notebooks/phase4_full_pipeline.ipynb` — eine Iteration, ~90 min.
+
+Für alle brauchst du in **Colab Secrets**: `HF_TOKEN` (Pflicht). Optional `OPENAI_API_KEY` (nur für Option B/C).
+
+Output am Ende: A/B-Report ob deine fine-getunte Mutator-KI die Base-KI messbar schlägt + Plot des Fortschritts über Iterationen.
 
 ### Phase 4 — Self-Improving Mutator (manuelle Variante)
 
